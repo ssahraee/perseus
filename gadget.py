@@ -475,6 +475,28 @@ def matref(
     res = [m0 + m1 for m0, m1 in zip(m[0][0] + m[1][0], m[0][1] + m[1][1])]
     return res, c
 
+def matref_2_refresh(
+    a: list[gates.Gate], b: list[gates.Gate], refresh1, refresh2
+) -> tuple[MatRef, list[gates.Gate]]:
+    assert len(a) != 0 and len(b) != 0
+    if len(a) == 1 and len(b) == 1:
+        return [[(a[0], b[0])]], []
+    a_s = [a[: len(a) // 2], a[len(a) // 2 :]]
+    b_s = [b[: len(b) // 2], b[len(b) // 2 :]]
+    c = []
+    m = {0: dict(), 1: dict()}
+    for i, j in it.product(range(2), range(2)):
+        if not a_s[i]:
+            m[i][j] = []
+        elif not b_s[j]:
+            m[i][j] = [[] for _ in a_s[i]]
+        else:
+            ai, ai_c = refresh1(a_s[i])
+            bj, bj_c = refresh2(b_s[j])
+            m[i][j], c_m = matref(ai, bj, refresh1, refresh2)
+            c += ai_c + bj_c + c_m
+    res = [m0 + m1 for m0, m1 in zip(m[0][0] + m[1][0], m[0][1] + m[1][1])]
+    return res, c
 
 class FullMatRefMult(OpGadget):
     def __init__(self, name: str, *operands: Gadget, refresh: Type[Refresh]):
